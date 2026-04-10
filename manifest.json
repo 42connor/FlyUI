@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Repersonalizer — AI Page Redesign",
+  "version": "2.0",
+  "description": "Transform any website's look and feel with AI-powered CSS redesign, powered by Claude.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "cookies"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*",
+    "https://claude.ai/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Repersonalize Page"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "css": ["content.css"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

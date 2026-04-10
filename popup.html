@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+  <title>Repersonalizer</title>
+</head>
+<body>
+  <div class="app-container">
+    <header class="header">
+      <div class="logo">
+        <div class="logo-mark">R</div>
+        <div class="logo-text">
+          <h1>Repersonalizer</h1>
+          <span class="tagline">AI-powered page redesign</span>
+        </div>
+      </div>
+      <div id="connection-badge" class="connection-badge checking">
+        <span class="connection-dot"></span>
+        <span class="connection-label">Checking...</span>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab-btn active" data-target="action-tab">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Transform
+      </button>
+      <button class="tab-btn" data-target="prefs-tab">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Style
+      </button>
+      <button class="tab-btn" data-target="settings-tab">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
+    </nav>
+
+    <main class="content">
+      <!-- ACTION TAB -->
+      <section id="action-tab" class="tab-content active">
+        <div class="action-card">
+
+          <!-- Always-On Toggle -->
+          <div class="auto-polish-bar">
+            <div class="auto-polish-info">
+              <span class="auto-polish-label">Always-On Polish</span>
+              <span id="auto-polish-status" class="auto-polish-status">Off</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="auto-polish-toggle">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Page status + site block -->
+          <div class="page-status-row">
+            <span id="page-status-badge" class="page-status-badge">--</span>
+            <button id="block-site-btn" class="block-site-btn" title="Block/unblock this site from auto-polish">
+              <span id="block-site-label">Skip this site</span>
+            </button>
+          </div>
+
+          <!-- Usage stats -->
+          <div id="usage-stats" class="usage-stats">
+            <div class="stat"><span id="stat-rules" class="stat-val">0</span><span class="stat-label">Rules only</span></div>
+            <div class="stat"><span id="stat-ai" class="stat-val">0</span><span class="stat-label">AI calls</span></div>
+            <div class="stat"><span id="stat-cached" class="stat-val">0</span><span class="stat-label">Cached</span></div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="action-hero">
+            <p class="description">Or run a manual transform with the controls below.</p>
+          </div>
+
+          <!-- Not logged in state -->
+          <div id="login-prompt" class="login-prompt" style="display: none;">
+            <p>Log in to <strong>claude.ai</strong> first, then come back here.</p>
+            <button id="open-claude-btn" class="secondary-btn">Open claude.ai</button>
+            <button id="recheck-btn" class="text-btn">Re-check connection</button>
+          </div>
+
+          <!-- Logged in state -->
+          <div id="action-buttons" style="display: none;">
+
+            <!-- Mode Picker -->
+            <div class="section-label">Mode</div>
+            <div class="mode-picker">
+              <button class="mode-btn active" data-mode="optimise">
+                <span class="mode-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                </span>
+                <span class="mode-name">Optimise</span>
+                <span class="mode-desc">Polish &amp; refine</span>
+              </button>
+              <button class="mode-btn" data-mode="redesign">
+                <span class="mode-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3z"/></svg>
+                </span>
+                <span class="mode-name">Redesign</span>
+                <span class="mode-desc">Full creative rewrite</span>
+              </button>
+              <button class="mode-btn" data-mode="fix">
+                <span class="mode-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                </span>
+                <span class="mode-name">Fix</span>
+                <span class="mode-desc">Repair broken UI</span>
+              </button>
+            </div>
+            <div id="mode-info" class="mode-info">
+              <p id="mode-info-text"></p>
+            </div>
+
+            <!-- Fix description (only visible in fix mode) -->
+            <div id="fix-input-wrap" class="fix-input-wrap" style="display: none;">
+              <textarea id="fix-description" class="fix-description" rows="2" placeholder="Describe what's broken... e.g. &quot;can't scroll past the cookie banner&quot; or &quot;the checkout button is hidden behind the nav&quot;"></textarea>
+            </div>
+
+            <!-- Model Picker -->
+            <div class="section-label">Model</div>
+            <div class="model-picker">
+              <button class="model-btn" data-model="claude-haiku-4-5-20251001" title="Haiku 4.5">
+                <span class="model-icon">&#9889;</span>
+                <span class="model-name">Haiku</span>
+                <span class="model-desc">Fast</span>
+              </button>
+              <button class="model-btn active" data-model="claude-sonnet-4-6" title="Sonnet 4.6">
+                <span class="model-icon">&#9733;</span>
+                <span class="model-name">Sonnet</span>
+                <span class="model-desc">Balanced</span>
+              </button>
+              <button class="model-btn" data-model="claude-opus-4-6" title="Opus 4.6">
+                <span class="model-icon">&#9830;</span>
+                <span class="model-name">Opus</span>
+                <span class="model-desc">Best</span>
+              </button>
+            </div>
+
+            <!-- Page Analysis -->
+            <div id="page-analysis" class="page-analysis" style="display: none;">
+              <div class="analysis-header">
+                <span class="section-label" style="margin:0">Page Scan</span>
+                <span id="analysis-confidence" class="confidence-badge"></span>
+              </div>
+              <ul id="analysis-list" class="analysis-list"></ul>
+            </div>
+
+            <button id="repersonalize-btn" class="primary-btn">
+              <span class="btn-text">Optimise This Page</span>
+              <span class="btn-loader" style="display: none;"></span>
+            </button>
+            <div id="history-bar" class="history-bar" style="display: none;">
+              <button id="history-back" class="history-nav-btn" title="Roll back">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <span id="history-pos" class="history-pos">1 / 1</span>
+              <button id="history-forward" class="history-nav-btn" title="Roll forward">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div id="status-area" class="status-area" style="display: none;">
+            <p id="status-text" class="status-text"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- PREFS TAB -->
+      <section id="prefs-tab" class="tab-content">
+        <div class="section-label">Quick Presets</div>
+        <div class="presets-grid">
+          <button class="preset-chip" data-style="Glassmorphism" data-colors="Frosted glass, translucent whites, soft blues" data-fonts="Inter, SF Pro">Glass</button>
+          <button class="preset-chip" data-style="Brutalist" data-colors="Black, white, raw concrete gray, bold red" data-fonts="Space Mono, Courier">Brutalist</button>
+          <button class="preset-chip" data-style="Synthwave / Retrowave" data-colors="Neon pink, electric purple, deep navy, cyan" data-fonts="Orbitron, Rajdhani">Synthwave</button>
+          <button class="preset-chip" data-style="90s Web / Y2K" data-colors="Hot pink, lime green, electric blue, yellow" data-fonts="Comic Sans MS, Verdana">Y2K</button>
+          <button class="preset-chip" data-style="Minimalist Zen" data-colors="Off-white, warm beige, charcoal, sage green" data-fonts="Garamond, Georgia">Zen</button>
+          <button class="preset-chip" data-style="Dark Luxury" data-colors="Matte black, gold, deep burgundy, ivory" data-fonts="Playfair Display, Cormorant">Luxury</button>
+        </div>
+
+        <div class="divider"></div>
+        <div class="section-label">Custom Style</div>
+
+        <div class="form-group">
+          <label for="pref-fonts">Fonts</label>
+          <input type="text" id="pref-fonts" placeholder="e.g. Courier New, Fira Code">
+        </div>
+        <div class="form-group">
+          <label for="pref-colors">Color Palette / Vibe</label>
+          <input type="text" id="pref-colors" placeholder="e.g. Synthwave (neon pink, deep purple)">
+        </div>
+        <div class="form-group">
+          <label for="pref-style">Design Style</label>
+          <input type="text" id="pref-style" placeholder="e.g. Brutalist, Glassmorphism, Retro">
+        </div>
+        <div class="form-group">
+          <label for="pref-language">Language / Tone</label>
+          <input type="text" id="pref-language" placeholder="e.g. Pirate speak, Professional, Gen-Z">
+        </div>
+        <div class="form-group">
+          <label for="pref-custom">Custom Instructions</label>
+          <textarea id="pref-custom" rows="3" placeholder="Any extra directions for the AI..."></textarea>
+        </div>
+      </section>
+
+      <!-- SETTINGS TAB -->
+      <section id="settings-tab" class="tab-content">
+        <div class="settings-card">
+          <div class="section-label">Account</div>
+          <div id="account-info" class="account-info">
+            <div class="account-status">
+              <span id="account-status-icon" class="account-status-icon"></span>
+              <span id="account-status-text">Checking connection...</span>
+            </div>
+            <p class="settings-hint">This extension uses your logged-in claude.ai session. No API key needed — just be logged in to claude.ai in this browser.</p>
+            <button id="settings-open-claude" class="secondary-btn">Open claude.ai</button>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="section-label">Model</div>
+          <div class="form-group">
+            <label for="model-select">Claude Model</label>
+            <select id="model-select">
+              <option value="claude-sonnet-4-6">Claude Sonnet 4.6 (recommended)</option>
+              <option value="claude-opus-4-6">Claude Opus 4.6</option>
+              <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (fast)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="section-label">Auto-Polish Cache</div>
+          <p class="settings-hint"><span id="cache-count">0</span> domains cached. Cached CSS is applied instantly without calling Claude.</p>
+          <button id="clear-cache-btn" class="secondary-btn">Clear All Cache</button>
+        </div>
+
+        <div class="settings-card">
+          <div class="section-label">Blocked Sites</div>
+          <p class="settings-hint">These sites are skipped by always-on polish. Click to unblock.</p>
+          <div id="blocked-sites-list" class="blocked-sites-list">
+            <span class="settings-hint">None blocked</span>
+          </div>
+        </div>
+
+        <div class="settings-footer">
+          <button id="save-settings-btn" class="secondary-btn">Save Settings</button>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
