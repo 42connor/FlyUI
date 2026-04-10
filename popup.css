@@ -308,7 +308,13 @@ a:hover {
 .page-status-badge.cached { background: rgba(52, 211, 153, 0.12); color: var(--success); }
 .page-status-badge.blocked { background: rgba(248, 113, 113, 0.12); color: var(--error); }
 
-.block-site-btn {
+.page-status-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.block-site-btn,
+.redo-site-btn {
   background: none;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -334,6 +340,11 @@ a:hover {
 .block-site-btn.is-blocked:hover {
   border-color: var(--success);
   color: var(--success);
+}
+
+.redo-site-btn:hover {
+  border-color: var(--accent-purple);
+  color: var(--accent-purple);
 }
 
 /* ── Usage Stats ── */
@@ -399,6 +410,33 @@ a:hover {
   font-size: 11px;
   color: var(--error);
   font-weight: 600;
+}
+
+/* ── Taste Stats ── */
+.taste-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+}
+
+.taste-stat {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.taste-stat strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.taste-sep {
+  color: var(--border);
+  font-size: 11px;
 }
 
 /* ── Section Labels ── */

@@ -157,6 +157,42 @@ async function clearCache() {
   return keys.length;
 }
 
+// ── Taste learning ──
+
+const TASTE_LOG_MAX = 100;
+
+async function logTasteSignal(hostname, action) {
+  const data = await chrome.storage.local.get(['tasteLog']);
+  const log = data.tasteLog || [];
+  log.push({ hostname, action, ts: Date.now() });
+  while (log.length > TASTE_LOG_MAX) log.shift();
+  await chrome.storage.local.set({ tasteLog: log });
+}
+
+async function getTasteSummary() {
+  const data = await chrome.storage.local.get(['tasteLog']);
+  const log = data.tasteLog || [];
+  if (log.length < 5) return '';
+  const kept = log.filter(e => e.action === 'kept');
+  const undone = log.filter(e => e.action === 'undone');
+  const redone = log.filter(e => e.action === 'redone');
+  let s = `Based on ${log.length} observations: ${kept.length} sites kept, ${undone.length} undone, ${redone.length} redone. `;
+  if (undone.length > 0) s += `Polish rejected on: ${[...new Set(undone.map(e => e.hostname))].slice(0, 5).join(', ')}. `;
+  if (redone.length > 0) s += `Wanted better on: ${[...new Set(redone.map(e => e.hostname))].slice(0, 5).join(', ')}. `;
+  return s;
+}
+
+async function getTasteStats() {
+  const data = await chrome.storage.local.get(['tasteLog']);
+  const log = data.tasteLog || [];
+  return {
+    total: log.length,
+    kept: log.filter(e => e.action === 'kept').length,
+    undone: log.filter(e => e.action === 'undone').length,
+    redone: log.filter(e => e.action === 'redone').length
+  };
+}
+
 // ── Auto-polish (the taste prompt) ──
 
 const AUTO_POLISH_PROMPT = `You are a design connoisseur with impeccable, opinionated taste. You receive a structural skeleton of a webpage. Generate a small, surgical CSS stylesheet that elevates its visual quality.
@@ -195,7 +231,14 @@ async function handleAutoPolish(hostname, url, dom, tabId) {
     const conversation = await createConversation(orgId, model);
     conversationId = conversation.uuid;
 
-    const prompt = `${AUTO_POLISH_PROMPT}\n\nPage: ${url}\n\n\`\`\`html\n${dom}\n\`\`\``;
+    const profileData = await chrome.storage.local.get(['userProfile']);
+    const userProfile = profileData.userProfile || '';
+    const tasteSummary = await getTasteSummary();
+
+    let prompt = AUTO_POLISH_PROMPT;
+    if (userProfile) prompt += `\n\nUSER PROFILE (tailor choices to this person):\n${userProfile}`;
+    if (tasteSummary) prompt += `\n\nLEARNED PREFERENCES:\n${tasteSummary}`;
+    prompt += `\n\nPage: ${url}\n\n\`\`\`html\n${dom}\n\`\`\``;
 
     const { fullCSS } = await streamResponse(orgId, conversationId, prompt, model, (chunk) => {
       chrome.tabs.sendMessage(tabId, { action: 'autoPolishCSS', chunk });
@@ -286,7 +329,7 @@ DOM for ${url}:\n\`\`\`html\n${dom}\n\`\`\``;
 async function handleRepersonalize(dom, url, tabId, mode, fixDescription) {
   let orgId = null, conversationId = null;
   try {
-    const data = await chrome.storage.local.get(['model', 'prefFonts', 'prefColors', 'prefStyle', 'prefLang', 'prefCustom']);
+    const data = await chrome.storage.local.get(['model', 'prefFonts', 'prefColors', 'prefStyle', 'prefLang', 'prefCustom', 'userProfile']);
     const model = data.model || 'claude-sonnet-4-6';
     const config = MODEL_CONFIG[model] || MODEL_CONFIG['claude-sonnet-4-6'];
     const trimmedDOM = dom.substring(0, config.maxDOM);
@@ -296,7 +339,10 @@ async function handleRepersonalize(dom, url, tabId, mode, fixDescription) {
     conversationId = conversation.uuid;
 
     const promptFn = PROMPTS[mode] || PROMPTS.optimise;
-    const prompt = promptFn(data, trimmedDOM, url, fixDescription);
+    let prompt = promptFn(data, trimmedDOM, url, fixDescription);
+    if (data.userProfile) prompt += `\n\nUSER PROFILE:\n${data.userProfile}`;
+    const tasteSummary = await getTasteSummary();
+    if (tasteSummary) prompt += `\n\nLEARNED PREFERENCES:\n${tasteSummary}`;
 
     await streamResponse(orgId, conversationId, prompt, model, (chunk) => {
       chrome.tabs.sendMessage(tabId, { action: 'streamCSS', chunk });
@@ -405,6 +451,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   if (request.action === 'isBlocked') {
     getBlockedSites().then(sites => sendResponse({ isBlocked: sites.includes(request.hostname) }));
+    return true;
+  }
+
+  if (request.action === 'clearSiteCache') {
+    const key = CACHE_PREFIX + request.hostname;
+    chrome.storage.local.remove([key]).then(() => sendResponse({ cleared: true }));
+    return true;
+  }
+
+  if (request.action === 'logTaste') {
+    logTasteSignal(request.hostname, request.signal);
+    return false;
+  }
+
+  if (request.action === 'getTasteStats') {
+    getTasteStats().then(sendResponse);
+    return true;
+  }
+
+  if (request.action === 'clearTasteLog') {
+    chrome.storage.local.set({ tasteLog: [] }).then(() => sendResponse({ cleared: true }));
     return true;
   }
 });

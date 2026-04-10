@@ -59,9 +59,12 @@
           <!-- Page status + site block -->
           <div class="page-status-row">
             <span id="page-status-badge" class="page-status-badge">--</span>
-            <button id="block-site-btn" class="block-site-btn" title="Block/unblock this site from auto-polish">
-              <span id="block-site-label">Skip this site</span>
-            </button>
+            <div class="page-status-actions">
+              <button id="redo-site-btn" class="redo-site-btn" title="Clear cache and re-polish this site">Redo</button>
+              <button id="block-site-btn" class="block-site-btn" title="Block/unblock this site from auto-polish">
+                <span id="block-site-label">Skip</span>
+              </button>
+            </div>
           </div>
 
           <!-- Usage stats -->
@@ -210,6 +213,27 @@
 
       <!-- SETTINGS TAB -->
       <section id="settings-tab" class="tab-content">
+        <div class="settings-card">
+          <div class="section-label">My Profile</div>
+          <p class="settings-hint">Tell the AI about yourself so it can tailor its taste to yours.</p>
+          <div class="form-group">
+            <textarea id="user-profile" rows="3" placeholder="e.g. I'm a designer who loves minimal interfaces. I hate visual clutter, prefer dark themes, muted colors, and clean typography."></textarea>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="section-label">Learning</div>
+          <p class="settings-hint">FlyUI learns from your actions — keeping, undoing, or redoing polish.</p>
+          <div id="taste-stats" class="taste-stats">
+            <span class="taste-stat"><strong id="taste-kept">0</strong> kept</span>
+            <span class="taste-sep">/</span>
+            <span class="taste-stat"><strong id="taste-undone">0</strong> undone</span>
+            <span class="taste-sep">/</span>
+            <span class="taste-stat"><strong id="taste-redone">0</strong> redone</span>
+          </div>
+          <button id="clear-taste-btn" class="secondary-btn">Reset Learning</button>
+        </div>
+
         <div class="settings-card">
           <div class="section-label">Account</div>
           <div id="account-info" class="account-info">

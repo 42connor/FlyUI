@@ -19,6 +19,22 @@ function hideOverlay() {
   if (overlay) { overlay.classList.add('rp-fade-out'); setTimeout(() => overlay.remove(), 400); }
 }
 
+function showCompletionToast(type) {
+  const existing = document.getElementById('rp-completion-toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'rp-completion-toast';
+  if (type === 'cached') {
+    toast.className = 'rp-toast-cached';
+    toast.innerHTML = '<span class="rp-toast-icon">&#10003;</span> Polished (cached)';
+  } else {
+    toast.className = 'rp-toast-ai';
+    toast.innerHTML = '<span class="rp-toast-icon">&#10024;</span> AI polish complete';
+  }
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.classList.add('rp-toast-out'); setTimeout(() => toast.remove(), 400); }, 2500);
+}
+
 // ══════════════════════════════════════════════════════════
 // LAYER 1: Zero-AI Rules Engine (instant, zero tokens)
 // ══════════════════════════════════════════════════════════
@@ -315,6 +331,8 @@ function tryAutoPolish() {
         const styleEl = getOrCreateStyleEl('ai-auto-polish-styles');
         styleEl.textContent = response.css;
         chrome.runtime.sendMessage({ action: 'trackStat', stat: 'cacheHit' });
+        chrome.runtime.sendMessage({ action: 'logTaste', hostname: location.hostname, signal: 'kept' });
+        showCompletionToast('cached');
       } else {
         const skeleton = extractSkeletonDOM();
         chrome.runtime.sendMessage({ action: 'autoPolish', hostname, url: location.href, dom: skeleton });
@@ -347,7 +365,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     hideOverlay(); takeSnapshot(); return;
   }
   if (request.action === 'autoPolishDone') {
-    hideOverlay(); takeSnapshot(); return;
+    hideOverlay(); takeSnapshot(); showCompletionToast('ai'); return;
   }
   if (request.action === 'applyStyles') {
     getOrCreateStyleEl('ai-repersonalizer-styles').textContent = request.css; hideOverlay(); takeSnapshot(); return;
@@ -356,7 +374,11 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   // ── History navigation ──
   if (request.action === 'historyBack') {
     const ok = historyBack();
-    sendResponse({ ok, ...getHistoryState() }); return;
+    const state = getHistoryState();
+    if (state.pos === 1) {
+      chrome.runtime.sendMessage({ action: 'logTaste', hostname: location.hostname, signal: 'undone' });
+    }
+    sendResponse({ ok, ...state }); return;
   }
   if (request.action === 'historyForward') {
     const ok = historyForward();

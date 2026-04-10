@@ -34,6 +34,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const blockedSitesList = document.getElementById('blocked-sites-list');
   const fixInputWrap = document.getElementById('fix-input-wrap');
   const fixDescription = document.getElementById('fix-description');
+  const redoSiteBtn = document.getElementById('redo-site-btn');
+  const userProfileInput = document.getElementById('user-profile');
+  const tasteKept = document.getElementById('taste-kept');
+  const tasteUndone = document.getElementById('taste-undone');
+  const tasteRedone = document.getElementById('taste-redone');
+  const clearTasteBtn = document.getElementById('clear-taste-btn');
 
   const selModel = document.getElementById('model-select');
   const inFonts = document.getElementById('pref-fonts');
@@ -169,6 +175,39 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   refreshCacheCount();
 
+  // ── Redo site ──
+  redoSiteBtn.addEventListener('click', () => {
+    if (!currentHostname) return;
+    chrome.runtime.sendMessage({ action: 'clearSiteCache', hostname: currentHostname }, () => {
+      chrome.runtime.sendMessage({ action: 'logTaste', hostname: currentHostname, signal: 'redone' });
+      chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+        if (tab) chrome.tabs.reload(tab.id);
+      });
+      redoSiteBtn.textContent = 'Redoing...';
+      setTimeout(() => { redoSiteBtn.textContent = 'Redo'; }, 2000);
+    });
+  });
+
+  // ── Taste stats ──
+  function refreshTasteStats() {
+    chrome.runtime.sendMessage({ action: 'getTasteStats' }, (r) => {
+      if (chrome.runtime.lastError || !r) return;
+      tasteKept.textContent = r.kept || 0;
+      tasteUndone.textContent = r.undone || 0;
+      tasteRedone.textContent = r.redone || 0;
+    });
+  }
+  refreshTasteStats();
+
+  clearTasteBtn.addEventListener('click', () => {
+    chrome.runtime.sendMessage({ action: 'clearTasteLog' }, () => {
+      tasteKept.textContent = '0'; tasteUndone.textContent = '0'; tasteRedone.textContent = '0';
+      const orig = clearTasteBtn.textContent;
+      clearTasteBtn.textContent = 'Reset!'; clearTasteBtn.style.borderColor = 'var(--success)'; clearTasteBtn.style.color = 'var(--success)';
+      setTimeout(() => { clearTasteBtn.textContent = orig; clearTasteBtn.style.borderColor = ''; clearTasteBtn.style.color = ''; }, 1500);
+    });
+  });
+
   // ── Mode picker ──
   function getSelectedMode() { return (document.querySelector('.mode-btn.active') || {}).dataset?.mode || 'optimise'; }
   function updateModeInfo() {
@@ -218,7 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
   recheckBtn.addEventListener('click', checkAuth);
 
   // ── Load prefs ──
-  chrome.storage.local.get(['model','mode_type','prefFonts','prefColors','prefStyle','prefLang','prefCustom'], (d) => {
+  chrome.storage.local.get(['model','mode_type','prefFonts','prefColors','prefStyle','prefLang','prefCustom','userProfile'], (d) => {
     if (d.model) { selModel.value = d.model; modelBtns.forEach(b => b.classList.toggle('active', b.dataset.model === d.model)); }
     if (d.mode_type) modeBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === d.mode_type));
     if (d.prefFonts) inFonts.value = d.prefFonts;
@@ -226,6 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (d.prefStyle) inStyle.value = d.prefStyle;
     if (d.prefLang) inLang.value = d.prefLang;
     if (d.prefCustom) inCustom.value = d.prefCustom;
+    if (d.userProfile) userProfileInput.value = d.userProfile;
     updateModeInfo();
   });
 
@@ -267,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function saveAll() {
     chrome.storage.local.set({ model: getSelectedModel(), mode_type: getSelectedMode(),
       prefFonts: inFonts.value.trim(), prefColors: inColors.value.trim(), prefStyle: inStyle.value.trim(),
-      prefLang: inLang.value.trim(), prefCustom: inCustom.value.trim() });
+      prefLang: inLang.value.trim(), prefCustom: inCustom.value.trim(), userProfile: userProfileInput.value.trim() });
   }
   saveBtn.addEventListener('click', () => {
     saveAll(); const o = saveBtn.innerText;
@@ -275,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => { saveBtn.innerText = o; saveBtn.style.borderColor = ''; saveBtn.style.color = ''; }, 1500);
   });
   selModel.addEventListener('change', () => { modelBtns.forEach(b => b.classList.toggle('active', b.dataset.model === selModel.value)); saveAll(); });
-  [inFonts, inColors, inStyle, inLang, inCustom].forEach(i => i.addEventListener('change', saveAll));
+  [inFonts, inColors, inStyle, inLang, inCustom, userProfileInput].forEach(i => i.addEventListener('change', saveAll));
 
   // ── Status ──
   function showStatus(m, t) { statusArea.style.display = 'flex'; statusArea.className = 'status-area'; if (t) statusArea.classList.add('status-'+t); statusText.textContent = m; }
@@ -357,7 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
       setLoading(false);
       const m = getSelectedMode();
       showStatus(m === 'fix' ? 'UI fixes applied!' : m === 'optimise' ? 'Page polished!' : 'Page redesigned!', 'success');
-      refreshHistory(); refreshPageStatus(); refreshStats();
+      refreshHistory(); refreshPageStatus(); refreshStats(); refreshTasteStats();
     } else if (req.action === 'repersonalizeError') {
       setLoading(false); showStatus(req.error, 'error');
     }
